@@ -122,8 +122,13 @@ function tls12ct_tests_page() {
 					//which was chosen
 					if(!empty($_POST['tls12ct_endpoint']) && check_admin_referer('refresh', 'tls12ct_nonce'))
 						$tls12ct_endpoint = $_POST['tls12ct_endpoint'];
-					else
-						$tls12ct_endpoint = array_keys($endpoints)[0];
+					else {
+						$tls12ct_endpoint = array_keys($endpoints);
+						if(is_array($tls12ct_endpoint) && !empty($tls12ct_endpoint))
+							$tls12ct_endpoint = $tls12ct_endpoint[0];
+						else
+							$tls12ct_endpoint = 'paypal';
+					}
 
 					//get curlopt_sslversion setting
 					if(!empty($_GET['curlopt_sslversion']) && !empty($_GET['_wpnonce']) && !wp_verify_nonce($_GET['_wpnonce'], 'curlopt_sslversion')) {
