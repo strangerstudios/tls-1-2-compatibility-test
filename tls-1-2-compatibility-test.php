@@ -6,6 +6,7 @@ Description: Verify TLS 1.2 support for included API endpoints and diagnose a so
 Version: 1.0
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
+Text Domain: tls12
 */
 /*
 	Copyright 2016	Stranger Studios	(email : jason@strangerstudios.com)
