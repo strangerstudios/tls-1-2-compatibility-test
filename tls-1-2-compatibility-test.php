@@ -29,7 +29,7 @@ add_action('admin_menu', 'tls12ct_admin_menu');
 function tls12ct_getEndPoints() {
 	return array(
 		//id => array(label, endpoint, callback handler)
-		'paypal'=>array('name'=>'paypal', 'label'=>'PayPal', 'url'=>'https://tlstest.paypal.com', 'callback'=>'tls12ct_test_paypal'),
+		'paypal'=>array('name'=>'paypal', 'label'=>'PayPal', 'url'=>'https://tlstest.paypal.com/', 'callback'=>'tls12ct_test_paypal'),
 		'google'=>array('name'=>'google', 'label'=>'Google', 'url'=>'https://cert-test.sandbox.google.com/', 'callback'=>'tls12ct_test_google'),
 		'howsmyssl'=>array('name'=>'howsmyssl', 'label'=>"How's My SSL?", 'url'=>'https://www.howsmyssl.com/a/check', 'callback'=>'tls12ct_test_howsmyssl'),		
 		
@@ -40,11 +40,18 @@ function tls12ct_getEndPoints() {
  * Hit the endpoint
  */
 function tls12ct_test_endpoint($endpoint) {
-	//hit the url
-	$result = wp_remote_retrieve_body(wp_remote_get($endpoint['url']));		
+	//hit the url	
+	$get = wp_remote_get( $endpoint['url'], array(
+					'timeout' => 60,
+					'sslverify' => FALSE,
+					'httpversion' => '1.1'));
+
+	//connection error?
+	if(is_wp_error($get))		
+		return array('enabled'=>false, 'message'=>implode('<br />', $get->get_error_messages()));
 	
-	//process results
-	return call_user_func($endpoint['callback'], $result);
+	//get result and process	
+	return call_user_func($endpoint['callback'], wp_remote_retrieve_body($get));
 }
 
 /**
@@ -193,7 +200,7 @@ function tls12ct_tests_page() {
 											}
 										?>
 									</select>
-									<span class="description"><?php _e('You only need to test against one API Endpoint.', 'tls12ct'); ?></span>
+									<span class="description"><?php _e('If the PayPal test works, you should be able to connect to other gateway APIs as well.', 'tls12ct'); ?></span>
 								</td>
 							</tr>
 						</tbody>
