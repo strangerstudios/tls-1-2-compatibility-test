@@ -24,6 +24,18 @@ function tls12ct_admin_menu() {
 add_action('admin_menu', 'tls12ct_admin_menu');
 
 /**
+ * Force cURL to use TLS 1.2 if needed.
+ */
+function tls12ct_http_api_curl($handle) {	
+	//check option
+	$curlopt_sslversion = get_option('tls12ct_curlopt_sslversion', false);	
+	
+	if($curlopt_sslversion)	
+		curl_setopt( $handle, CURLOPT_SSLVERSION, 6 );
+}
+add_action('http_api_curl', 'tls12ct_http_api_curl');
+
+/**
  * Get endpoints and tests.
  */
 function tls12ct_getEndPoints() {
@@ -45,7 +57,7 @@ function tls12ct_test_endpoint($endpoint) {
 					'timeout' => 60,
 					'sslverify' => FALSE,
 					'httpversion' => '1.1'));
-
+					
 	//connection error?
 	if(is_wp_error($get))		
 		return array('enabled'=>false, 'message'=>implode('<br />', $get->get_error_messages()));
@@ -88,7 +100,6 @@ function tls12ct_test_howsmyssl($result) {
 	return array('enabled'=>$enabled, 'message'=>'Rating: ' . $result['rating']);
 }
 
-
 /**
  * Load TLS 1.2 Test Page
  */
@@ -106,10 +117,22 @@ function tls12ct_tests_page() {
 					$endpoints = tls12ct_getEndPoints();
 					
 					//which was chosen
-					if( !empty($_POST['tls12ct_endpoint']) && check_admin_referer( 'refresh', 'tls12_nonce' ))
+					if(!empty($_POST['tls12ct_endpoint']) && check_admin_referer('refresh', 'tls12ct_nonce'))
 						$tls12ct_endpoint = $_POST['tls12ct_endpoint'];
 					else
 						$tls12ct_endpoint = array_keys($endpoints)[0];
+
+					//get curlopt_sslversion setting
+					if(!empty($_GET['curlopt_sslversion']) && !empty($_GET['_wpnonce']) && !wp_verify_nonce($_GET['_wpnonce'], 'curlopt_sslversion')) {
+						if($_GET['curlopt_sslversion'] == 'enable')
+							$curlopt_sslversion = true;
+						else
+							$curlopt_sslversion = false;
+							
+						update_option('tls12ct_curlopt_sslversion', $curlopt_sslversion, 'no');
+					} else {
+						$curlopt_sslversion = get_option('tls12ct_curlopt_sslversion', false);
+					}
 						
 					//run test
 					$tls12 = tls12ct_test_endpoint($endpoints[$tls12ct_endpoint]);
@@ -120,17 +143,17 @@ function tls12ct_tests_page() {
 						<div class="inside">
 							<?php if($tls12['enabled']) { ?>
 								<h1 style="color: green"><?php _e('TLS 1.2 Enabled', 'tls12ct');?></h1>
-								<p><?php _e('Your site should work fine when making calls to gateways and APIs that only support TLS 1.2. You may still want to consider the actions below to be fully secure.', 'tls12ct');?></p>
+								<p><?php _e('Your site should work fine when making calls to gateways and APIs that require TLS 1.2. You may still want to consider the actions below to secure your site as much as possible.', 'tls12ct');?></p>
 							<?php } else { ?>
 								<h1 style="color: red"><?php _e('TLS 1.2 Not Enabled', 'tls12ct');?></h1>
-								<p><?php _e('Your site is likely to fail when attempting calls to gateways and APIs that only support TLS 1.2. Consider following the actions below.', 'tls12ct');?></p>
+								<p><?php _e('Your site is likely to fail when attempting calls to gateways and APIs that require TLS 1.2. Consider following the actions below to enable TLS 1.2.', 'tls12ct');?></p>
 							<?php } ?>
 						<table class="wp-list-table widefat fixed" width="100%" cellpadding="0" cellspacing="0" border="0">
 							<thead>
 								<tr class="alternate">
-									<th><?php _e('Type', 'tls12ct'); ?></th>
-									<th><?php _e('Result', 'tls12ct'); ?></th>
-									<th><?php _e('Action', 'tls12ct'); ?></th>
+									<th><?php _e('Setting', 'tls12ct'); ?></th>
+									<th><?php _e('Value', 'tls12ct'); ?></th>
+									<th><?php _e('Action/Notes', 'tls12ct'); ?></th>
 								</tr>
 							</thead>
 							<tbody>									
@@ -172,9 +195,17 @@ function tls12ct_tests_page() {
 									</td>
 									<td>
 										<?php
-											if(function_exists('curl_version'))
+											if(function_exists('curl_version')) {
 												echo '<strong>' . __('Make sure you are running OpenSSL/1.0.1 or higher, NSS/3.15.1 or higher, or latest version of other cryptographic libraries.' . '</strong>',
 												'tls12ct');
+												
+												if(!$tls12['enabled'] || $curlopt_sslversion) {
+													if($curlopt_sslversion)
+														echo '<br /><br /><strong>' . sprintf(__('You have chosen to force TLS 1.2 for cURL. <a href="%s">Click here to disable this feature</a>.', 'tls12ct'), wp_nonce_url(admin_url('tools.php?page=tls12ct-tests&curlopt_sslversion=disable')), 'curlopt_sslversion', 'tls12ct_nonce') . '</strong>';
+													else
+														echo '<br /><br /><strong>' . sprintf(__('<a href="%s">Click here to force cURL to use TLS 1.2</a>.', 'tls12ct'), wp_nonce_url(admin_url('tools.php?page=tls12ct-tests&curlopt_sslversion=enable')), 'curlopt_sslversion', 'tls12ct_nonce') . '</strong>';
+												}
+											}
 											else
 												_e('Install cURL if requests are not working or not secure.', 'tls12ct');
 										?>
@@ -207,7 +238,7 @@ function tls12ct_tests_page() {
 					</table>
 					<fieldset class="submit">
 						<input class="button-primary" type="submit" name="tls12ct_test_submit" value="<?php _e('Refresh Test', 'tls12ct');?>">
-						<?php wp_nonce_field('refresh', 'tls12_nonce'); ?>
+						<?php wp_nonce_field('refresh', 'tls12ct_nonce'); ?>
 					</fieldset>
 				</form>												
 			</div> <!-- end post-body-content -->
