@@ -98,7 +98,7 @@ function tls12ct_tests_page() {
 					$endpoints = tls12ct_getEndPoints();
 					
 					//which was chosen
-					if( !empty($_POST['tls12ct_endpoint']) )
+					if( !empty($_POST['tls12ct_endpoint']) && check_admin_referer( 'refresh', 'tls12_nonce' ))
 						$tls12ct_endpoint = $_POST['tls12ct_endpoint'];
 					else
 						$tls12ct_endpoint = array_keys($endpoints)[0];
@@ -199,7 +199,7 @@ function tls12ct_tests_page() {
 					</table>
 					<fieldset class="submit">
 						<input class="button-primary" type="submit" name="tls12ct_test_submit" value="<?php _e('Refresh Test', 'tls12ct');?>">
-						<?php wp_nonce_field(); ?>
+						<?php wp_nonce_field('refresh', 'tls12_nonce'); ?>
 					</fieldset>
 				</form>												
 			</div> <!-- end post-body-content -->
