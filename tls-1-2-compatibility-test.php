@@ -3,7 +3,7 @@
 Plugin Name: TLS 1.2 Compatibility Test
 Plugin URI: http://www.paidmembershipspro.com
 Description: Verify TLS 1.2 support for included API endpoints and diagnose a solution to enable compatibility.
-Version: 1.0
+Version: 1.0.1
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 Text Domain: tls12
@@ -42,7 +42,7 @@ function tls12ct_getEndPoints() {
 	return array(
 		//id => array(label, endpoint, callback handler)
 		'paypal'=>array('name'=>'paypal', 'label'=>'PayPal', 'url'=>'https://tlstest.paypal.com/', 'callback'=>'tls12ct_test_paypal'),
-		'google'=>array('name'=>'google', 'label'=>'Google', 'url'=>'https://cert-test.sandbox.google.com/', 'callback'=>'tls12ct_test_google'),
+		//'google'=>array('name'=>'google', 'label'=>'Google', 'url'=>'https://cert-test.sandbox.google.com/', 'callback'=>'tls12ct_test_google'),
 		'howsmyssl'=>array('name'=>'howsmyssl', 'label'=>"How's My SSL?", 'url'=>'https://www.howsmyssl.com/a/check', 'callback'=>'tls12ct_test_howsmyssl'),		
 		
 	);
@@ -92,12 +92,15 @@ function tls12ct_test_google($result) {
 function tls12ct_test_howsmyssl($result) {	
 	$result = json_decode($result, true);
 	
-	if($result['tls_version'] == 'TLS 1.2')
+	if($result['tls_version'] == 'TLS 1.2') {
 		$enabled = true;
-	else
+		$message = 'TLS 1.2 enabled.';
+	} else {
 		$enabled = false;	
+		$message = 'TLS 1.2 not enabled.';
+	}
 		
-	return array('enabled'=>$enabled, 'message'=>'Rating: ' . $result['rating']);
+	return array('enabled'=>$enabled, 'message'=>$message);
 }
 
 /**
@@ -163,21 +166,42 @@ function tls12ct_tests_page() {
 									<td>
 										<?php 
 											if($tls12['enabled'])
-												echo $tls12['message']; 
+												echo '<span style="color: green;">' . $tls12['message'] . '</span>';
 											else
-												echo '<strong style="color: red">' . $tls12['message'] . '</strong>';
+												echo '<strong style="color: red;">' . $tls12['message'] . '</strong>';
 										?>
 									</td>
 								</tr>
-								<tr>
+								<tr class="alternate">
 									<td><?php _e('PHP Version', 'tls12ct'); ?></td>
 									<td><?php echo phpversion(); ?></td>
 									<td>
 										<?php 
 											if(version_compare(phpversion(), '5.5.19', '>='))
-												_e('Upgrade to PHP version 5.5.19 or higher.', 'tls12ct');
+												echo '<span style="color: green;">' . __('PHP version 5.5.19 or higher detected.', 'tls12ct') . '</span>';
 											else
-												echo '<strong style="color: red">' . __('Upgrade to PHP version 5.5.19 or higher.', 'tls12ct') . '</strong>';
+												echo '<strong style="color: red;">' . __('Upgrade to PHP version 5.5.19 or higher.', 'tls12ct') . '</strong>';
+										?>
+									</td>
+								</tr>
+								<tr>
+									<td><?php _e('cURL Version', 'tls12ct'); ?></td>
+									<td>
+										<?php 
+											if(!function_exists('curl_version'))
+												echo '<span style="color: green;">' . __('cURL not installed.', 'tls12ct') . '</span>';
+											else {
+												$curl_version = curl_version();
+												echo $curl_version['version'];
+											}
+										?>
+									</td>
+									<td>
+										<?php 
+											if(version_compare($curl_version['version'], '7.34.0', '>='))
+												echo '<span style="color: green;">' . __('cURL version 7.34.0 or higher detected.', 'tls12ct') . '</span>';
+											else
+												echo '<strong style="color: red;">' . __('Upgrade to cURL version 7.34.0 or higher.', 'tls12ct') . '</strong>';
 										?>
 									</td>
 								</tr>
@@ -196,14 +220,14 @@ function tls12ct_tests_page() {
 									<td>
 										<?php
 											if(function_exists('curl_version')) {
-												echo '<strong>' . __('Make sure you are running OpenSSL/1.0.1 or higher, NSS/3.15.1 or higher, or latest version of other cryptographic libraries.' . '</strong>',
+												echo __('Make sure you are running OpenSSL/1.0.1 or higher, NSS/3.15.1 or higher, or the latest version of other cryptographic libraries.',
 												'tls12ct');
 												
 												if(!$tls12['enabled'] || $curlopt_sslversion) {
 													if($curlopt_sslversion)
-														echo '<br /><br /><strong>' . sprintf(__('You have chosen to force TLS 1.2 for cURL. <a href="%s">Click here to disable this feature</a>.', 'tls12ct'), wp_nonce_url(admin_url('tools.php?page=tls12ct-tests&curlopt_sslversion=disable')), 'curlopt_sslversion', 'tls12ct_nonce') . '</strong>';
+														echo '<br /><br /><strong style="color: green">' . sprintf(__('You have chosen to force TLS 1.2 for cURL. <a href="%s">Click here to disable this feature</a>.', 'tls12ct'), wp_nonce_url(admin_url('tools.php?page=tls12ct-tests&curlopt_sslversion=disable')), 'curlopt_sslversion', 'tls12ct_nonce') . '</strong>';
 													else
-														echo '<br /><br /><strong>' . sprintf(__('<a href="%s">Click here to force cURL to use TLS 1.2</a>.', 'tls12ct'), wp_nonce_url(admin_url('tools.php?page=tls12ct-tests&curlopt_sslversion=enable')), 'curlopt_sslversion', 'tls12ct_nonce') . '</strong>';
+														echo '<br /><br /><strong style="color: red;">' . sprintf(__('If your versions of PHP and cURL are not up to date, you may still be able to force TLS 1.2 connections. <a href="%s">Click here to force cURL to use TLS 1.2</a>.', 'tls12ct'), wp_nonce_url(admin_url('tools.php?page=tls12ct-tests&curlopt_sslversion=enable')), 'curlopt_sslversion', 'tls12ct_nonce') . '</strong>';
 												}
 											}
 											else
@@ -246,8 +270,9 @@ function tls12ct_tests_page() {
 				<div class="postbox">
 					<h3 class="hndle"><?php _e('About the Test', 'tls12ct'); ?></h3>
 					<div class="inside">
-						<p><?php _e('Payment gateways are now requiring commmunication via TLS 1.2. This plugin will test your webserver with popular gateways such as Stripe, PayPal, Braintree and Authorize.net, as well as the testing endpoint provided by OpenSSL to ensure there is no outage in your ecommerce application.', 'tls12ct'); ?></p>
-						<p><?php _e('If your server is not able to communicate via the TLS 1.2 protocol, you will be shown the appropriate steps to take to upgrade the server version of OpenSSL, PHP, or direct you to update the SSLVERSION of CURL.', 'tls12ct'); ?></p>
+						<p><?php _e('Payment gateways are now requiring commmunication via TLS 1.2. This plugin will test your webserver for compatibility to ensure there is no outage in your ecommerce application.', 'tls12ct'); ?></p>
+						<p><?php _e('If your server is not able to communicate via TLS 1.2, you will be shown the appropriate steps to take to upgrade the server version of OpenSSL, PHP, or direct you to update the SSLVERSION of CURL.', 'tls12ct'); ?></p>
+						<p><?php printf(__('For more information on these TLS 1.2 requirements and how to address them, <a target="_blank" href="%s">read the blog TLS 1.2 update blog post at PaidMembershipsPro.com</a>.', 'tls12ct'), 'http://www.paidmembershipspro.com/update-tls-1-2-requirements-gateways/');?></p>
 					</div> <!-- end inside -->
 				</div> <!-- end postbox -->
 			</div> <!-- end postbox-container-1 -->
