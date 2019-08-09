@@ -2,7 +2,7 @@
 Contributors: strangerstudios
 Tags: security, ecommerce, gateway, paypal, tls, server, php, api, version, curl, sslversion
 Requires at least: 3.0
-Tested up to: 4.5.2
+Tested up to: 5.2.2
 Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
