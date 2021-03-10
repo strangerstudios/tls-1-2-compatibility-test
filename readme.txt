@@ -2,8 +2,8 @@
 Contributors: strangerstudios
 Tags: security, ecommerce, gateway, paypal, tls, server, php, api, version, curl, sslversion
 Requires at least: 3.0
-Tested up to: 5.2.2
-Stable tag: 1.0.1
+Tested up to: 5.7.0
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,8 +15,7 @@ Payment gateways are now requiring commmunication via TLS 1.2. This plugin will 
 
 If your server is not able to communicate via TLS 1.2, you will be shown the appropriate steps to take to upgrade the server version of OpenSSL, PHP, or direct you to update the SSLVERSION of CURL.
 
-The plugin currently offers testing via these API Endpoints:
-* PayPal (https://tlstest.paypal.com/)
+The plugin currently offers testing via the following API Endpoint:
 * How's My SSL? (https://www.howsmyssl.com/a/check)
 
 Testing against these API Endpoints should validate compatibility for other gateways and APIs, even if you are not using PayPal, for example, on your ecommerce application. However, we do plan to add more tests for API Endpoints provided by popular gateways.
@@ -38,6 +37,10 @@ None yet.
 1. Admin page under Tools > TLS 1.2 Test.
 
 == Changelog ==
+= 1.0.2 =
+* Show passing result if TLS 1.3 is enabled
+* Removed abandoned PayPal endpoint
+
 = 1.0.1 =
 * Added cURL version to the table with notes to upgrade if below 7.34.0.
 * Improved recommendations in the notes section.
