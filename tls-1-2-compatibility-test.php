@@ -3,7 +3,7 @@
 Plugin Name: TLS 1.2 Compatibility Test
 Plugin URI: http://www.paidmembershipspro.com
 Description: Verify TLS 1.2 support for included API endpoints and diagnose a solution to enable compatibility.
-Version: 1.0.1
+Version: 1.0.2
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 Text Domain: tls12
@@ -41,7 +41,7 @@ add_action('http_api_curl', 'tls12ct_http_api_curl');
 function tls12ct_getEndPoints() {
 	return array(
 		//id => array(label, endpoint, callback handler)
-		'paypal'=>array('name'=>'paypal', 'label'=>'PayPal', 'url'=>'https://tlstest.paypal.com/', 'callback'=>'tls12ct_test_paypal'),
+		//'paypal'=>array('name'=>'paypal', 'label'=>'PayPal', 'url'=>'https://tlstest.paypal.com/', 'callback'=>'tls12ct_test_paypal'),
 		//'google'=>array('name'=>'google', 'label'=>'Google', 'url'=>'https://cert-test.sandbox.google.com/', 'callback'=>'tls12ct_test_google'),
 		'howsmyssl'=>array('name'=>'howsmyssl', 'label'=>"How's My SSL?", 'url'=>'https://www.howsmyssl.com/a/check', 'callback'=>'tls12ct_test_howsmyssl'),		
 		
@@ -94,10 +94,13 @@ function tls12ct_test_howsmyssl($result) {
 	
 	if($result['tls_version'] == 'TLS 1.2') {
 		$enabled = true;
-		$message = 'TLS 1.2 enabled.';
+		$message = 'TLS 1.3 enabled';
+	} elseif($result['tls_version'] == 'TLS 1.2') {
+		$enabled = true;
+		$message = 'TLS 1.2 enabled';
 	} else {
 		$enabled = false;	
-		$message = 'TLS 1.2 not enabled.';
+		$message = 'TLS 1.2 not enabled';
 	}
 		
 	return array('enabled'=>$enabled, 'message'=>$message);
@@ -150,7 +153,7 @@ function tls12ct_tests_page() {
 						<h3 class="hndle"><?php printf(__('Test Results Using %s Endpoint', 'tls12ct'), $endpoints[$tls12ct_endpoint]['label']); ?></h3>
 						<div class="inside">
 							<?php if($tls12['enabled']) { ?>
-								<h1 style="color: green"><?php _e('TLS 1.2 Enabled', 'tls12ct');?></h1>
+								<h1 style="color: green"><?php _e($tls12['message'], 'tls12ct');?></h1>
 								<p><?php _e('Your site should work fine when making calls to gateways and APIs that require TLS 1.2. You may still want to consider the actions below to secure your site as much as possible.', 'tls12ct');?></p>
 							<?php } else { ?>
 								<h1 style="color: red"><?php _e('TLS 1.2 Not Enabled', 'tls12ct');?></h1>
@@ -171,9 +174,9 @@ function tls12ct_tests_page() {
 									<td>
 										<?php 
 											if($tls12['enabled'])
-												echo '<span style="color: green;">' . $tls12['message'] . '</span>';
+												echo '<span style="color: green;">' . $tls12['message'] . '.</span>';
 											else
-												echo '<strong style="color: red;">' . $tls12['message'] . '</strong>';
+												echo '<strong style="color: red;">' . $tls12['message'] . '.</strong>';
 										?>
 									</td>
 								</tr>
@@ -260,7 +263,7 @@ function tls12ct_tests_page() {
 											}
 										?>
 									</select>
-									<span class="description"><?php _e('If the PayPal test works, you should be able to connect to other gateway APIs as well.', 'tls12ct'); ?></span>
+									<span class="description"><?php // _e('If the PayPal test works, you should be able to connect to other gateway APIs as well.', 'tls12ct'); ?></span>
 								</td>
 							</tr>
 						</tbody>
