@@ -40,8 +40,7 @@ add_action('http_api_curl', 'tls12ct_http_api_curl');
  */
 function tls12ct_getEndPoints() {
 	return array(
-		//id => array(label, endpoint, callback handler)
-		'paypal'=>array('name'=>'paypal', 'label'=>'PayPal', 'url'=>'https://tlstest.paypal.com/', 'callback'=>'tls12ct_test_paypal'),
+		//id => array(label, endpoint, callback handler)		
 		//'google'=>array('name'=>'google', 'label'=>'Google', 'url'=>'https://cert-test.sandbox.google.com/', 'callback'=>'tls12ct_test_google'),
 		'howsmyssl'=>array('name'=>'howsmyssl', 'label'=>"How's My SSL?", 'url'=>'https://www.howsmyssl.com/a/check', 'callback'=>'tls12ct_test_howsmyssl'),		
 		
@@ -92,9 +91,9 @@ function tls12ct_test_google($result) {
 function tls12ct_test_howsmyssl($result) {	
 	$result = json_decode($result, true);
 	
-	if($result['tls_version'] == 'TLS 1.2') {
+	if( $result['tls_version'] == 'TLS 1.2' || $result['tls_version'] == 'TLS 1.3' ) {
 		$enabled = true;
-		$message = 'TLS 1.2 enabled.';
+		$message = $result['tls_version'];
 	} else {
 		$enabled = false;	
 		$message = 'TLS 1.2 not enabled.';
@@ -150,11 +149,11 @@ function tls12ct_tests_page() {
 						<h3 class="hndle"><?php printf(__('Test Results Using %s Endpoint', 'tls12ct'), $endpoints[$tls12ct_endpoint]['label']); ?></h3>
 						<div class="inside">
 							<?php if($tls12['enabled']) { ?>
-								<h1 style="color: green"><?php _e('TLS 1.2 Enabled', 'tls12ct');?></h1>
-								<p><?php _e('Your site should work fine when making calls to gateways and APIs that require TLS 1.2. You may still want to consider the actions below to secure your site as much as possible.', 'tls12ct');?></p>
+								<h1 style="color: green"><?php printf( __('%s Enabled', 'tls12ct'), $tls12['message'] );?></h1>
+								<p><?php print_r( __('Your site should work fine when making calls to gateways and APIs that require %s. You may still want to consider the actions below to secure your site as much as possible.', 'tls12ct'), $tls12['message'] );?></p>
 							<?php } else { ?>
-								<h1 style="color: red"><?php _e('TLS 1.2 Not Enabled', 'tls12ct');?></h1>
-								<p><?php _e('Your site is likely to fail when attempting calls to gateways and APIs that require TLS 1.2. Consider following the actions below to enable TLS 1.2.', 'tls12ct');?></p>
+								<h1 style="color: red"><?php _e('TLS 1.2 or TLS 1.3 Not Enabled', 'tls12ct');?></h1>
+								<p><?php _e('Your site is likely to fail when attempting calls to gateways and APIs that require TLS 1.2. Consider following the actions below to enable TLS 1.2 or TLS 1.3.', 'tls12ct');?></p>
 							<?php } ?>
 						<table class="wp-list-table widefat fixed" width="100%" cellpadding="0" cellspacing="0" border="0">
 							<thead>
@@ -259,8 +258,7 @@ function tls12ct_tests_page() {
 											<?php
 											}
 										?>
-									</select>
-									<span class="description"><?php _e('If the PayPal test works, you should be able to connect to other gateway APIs as well.', 'tls12ct'); ?></span>
+									</select>								
 								</td>
 							</tr>
 						</tbody>
@@ -275,8 +273,9 @@ function tls12ct_tests_page() {
 				<div class="postbox">
 					<h3 class="hndle"><?php _e('About the Test', 'tls12ct'); ?></h3>
 					<div class="inside">
-						<p><?php _e('Payment gateways are now requiring commmunication via TLS 1.2. This plugin will test your webserver for compatibility to ensure there is no outage in your ecommerce application.', 'tls12ct'); ?></p>
-						<p><?php _e('If your server is not able to communicate via TLS 1.2, you will be shown the appropriate steps to take to upgrade the server version of OpenSSL, PHP, or direct you to update the SSLVERSION of CURL.', 'tls12ct'); ?></p>
+						<p><?php _e('Payment gateways are now requiring commmunication via TLS 1.2 or later. This plugin will test your webserver for compatibility to ensure there is no outage in your ecommerce application.', 'tls12ct'); ?></p>
+						<p><?php _e('Using TLS 1.3 is fully backwards compatible with TLS 1.2.', 'tls12ct' ); ?></p>
+						<p><?php _e('If your server is not able to communicate via TLS 1.2 or later, you will be shown the appropriate steps to take to upgrade the server version of OpenSSL, PHP, or direct you to update the SSLVERSION of CURL.', 'tls12ct'); ?></p>
 						<p><?php printf(__('For more information on these TLS 1.2 requirements and how to address them, <a target="_blank" href="%s">read the blog TLS 1.2 update blog post at PaidMembershipsPro.com</a>.', 'tls12ct'), 'http://www.paidmembershipspro.com/update-tls-1-2-requirements-gateways/');?></p>
 					</div> <!-- end inside -->
 				</div> <!-- end postbox -->
